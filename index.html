@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>RINGBOX — Boks Eğitim & Antrenman</title>
+  <meta name="description" content="Sıfırdan ileri seviyeye PWA boks eğitim uygulaması: raunt zamanlayıcı, Türkçe sesli kombinasyon çağırıcı, teknik kütüphanesi ve ilerleme takibi." />
+  <meta name="theme-color" content="#09090D" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="RINGBOX" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="./icons/icon.svg" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div class="ring-ropes" aria-hidden="true">
+    <span></span><span></span><span></span>
+  </div>
+
+  <!-- Top Header -->
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">🥊</div>
+      <div>
+        <h1 class="brand-title">RING<span>BOX</span></h1>
+        <p class="brand-sub" id="headerRankLabel">Çaylak · 0 XP</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button id="btnInstallPwa" class="chip-btn gold hidden" type="button" aria-label="Uygulamayı Yükle">
+        <span>⬇ Yükle</span>
+      </button>
+      <button id="btnStanceToggle" class="chip-btn" type="button" title="Gard değiştir (Ortodoks / Solak)">
+        <span id="stanceShortLabel">ORTODOKS</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Views -->
+  <main class="app-main">
+    <!-- ==================== TAB 1: RING / TIMER ==================== -->
+    <section id="view-ring" class="view active" aria-label="Antrenman Zamanlayıcı">
+      <!-- Active Program Banner -->
+      <div class="active-workout-bar">
+        <div class="active-workout-info">
+          <span class="badge-level" id="activeLevelBadge">SERBEST ANTRENMAN</span>
+          <h2 id="activeWorkoutName">Standart Ring Zamanlayıcı</h2>
+        </div>
+        <button id="btnGloveMode" class="glove-toggle-btn" type="button" title="Eldivenle kolay dokunma modu">
+          🥊 Eldiven Modu
+        </button>
+      </div>
+
+      <!-- Status Pills -->
+      <div class="status-strip">
+        <button id="toggleSound" class="pill-toggle on" type="button">🔔 Gong Açık</button>
+        <button id="toggleVoice" class="pill-toggle on" type="button">🎙 Sesli Kombo</button>
+        <button id="toggleWakeLock" class="pill-toggle on" type="button">📱 Ekran Açık</button>
+      </div>
+
+      <!-- Ring Clock Card -->
+      <div class="timer-stage" id="timerStage" data-phase="idle">
+        <div class="phase-row">
+          <span class="phase-pill" id="phaseLabel">HAZIR</span>
+          <span class="round-counter" id="roundLabel">RAUNT 1 / 3</span>
+        </div>
+
+        <div class="clock-ring-wrap">
+          <svg class="clock-svg" viewBox="0 0 260 260" aria-hidden="true">
+            <circle class="clock-track" cx="130" cy="130" r="116" />
+            <circle class="clock-progress" id="clockProgress" cx="130" cy="130" r="116" />
+          </svg>
+          <div class="clock-center">
+            <div class="clock-time" id="clockDisplay">03:00</div>
+            <div class="clock-sub" id="clockSubtext">Başlamak için dokun</div>
+          </div>
+        </div>
+
+        <!-- Live Combo Caller Box -->
+        <div class="combo-board" id="comboBoard">
+          <div class="combo-board-head">
+            <span>SESLİ KOMBİNASYON ÇAĞIRICI</span>
+            <span id="comboDifficultyTag">Başlangıç</span>
+          </div>
+          <div class="combo-badges" id="comboBadges">
+            <span class="combo-chip">1</span>
+            <span class="combo-chip">2</span>
+          </div>
+          <div class="combo-text" id="comboText">Antrenman başlayınca komutlar burada belirecek</div>
+        </div>
+
+        <!-- Big Glove-Friendly Primary Controls -->
+        <div class="timer-controls">
+          <button id="btnStartPause" class="btn-ring-primary" type="button">
+            ▶ RİNGE ÇIK
+          </button>
+          <div class="timer-secondary-row">
+            <button id="btnTestGong" class="btn-ring-secondary" type="button">🔔 Gong Test</button>
+            <button id="btnSkipPhase" class="btn-ring-secondary" type="button">⏭ Atla</button>
+            <button id="btnResetTimer" class="btn-ring-secondary danger" type="button">↺ Sıfırla</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Timer & Voice Settings -->
+      <div class="card settings-card" id="timerSettingsCard">
+        <div class="card-head">
+          <h3>Raunt & Kombo Ayarları</h3>
+          <button id="btnQuickPresets" class="text-link-btn" type="button">Program Seç →</button>
+        </div>
+
+        <div class="stepper-grid">
+          <div class="stepper-item">
+            <label>Raunt Sayısı</label>
+            <div class="stepper-ctrl">
+              <button type="button" class="step-btn" data-step="rounds" data-delta="-1">−</button>
+              <strong id="valRounds">3</strong>
+              <button type="button" class="step-btn" data-step="rounds" data-delta="1">+</button>
+            </div>
+          </div>
+          <div class="stepper-item">
+            <label>Raunt Süresi</label>
+            <div class="stepper-ctrl">
+              <button type="button" class="step-btn" data-step="roundSec" data-delta="-15">−</button>
+              <strong id="valRoundSec">03:00</strong>
+              <button type="button" class="step-btn" data-step="roundSec" data-delta="15">+</button>
+            </div>
+          </div>
+          <div class="stepper-item">
+            <label>Dinlenme</label>
+            <div class="stepper-ctrl">
+              <button type="button" class="step-btn" data-step="restSec" data-delta="-15">−</button>
+              <strong id="valRestSec">01:00</strong>
+              <button type="button" class="step-btn" data-step="restSec" data-delta="15">+</button>
+            </div>
+          </div>
+          <div class="stepper-item">
+            <label>Hazırlık</label>
+            <div class="stepper-ctrl">
+              <button type="button" class="step-btn" data-step="prepSec" data-delta="-5">−</button>
+              <strong id="valPrepSec">00:05</strong>
+              <button type="button" class="step-btn" data-step="prepSec" data-delta="5">+</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="select-grid">
+          <div class="field-box">
+            <label for="selectComboLevel">Kombo Seviyesi</label>
+            <select id="selectComboLevel">
+              <option value="beginner">Seviye 1 · Başlangıç (1-2)</option>
+              <option value="intermediate">Seviye 2 · Orta (1-6 + Savunma)</option>
+              <option value="advanced">Seviye 3 · İleri (Pro + Kontra)</option>
+              <option value="defense">Savunma & Refleks Odaklı</option>
+            </select>
+          </div>
+          <div class="field-box">
+            <label for="selectComboCadence">Komut Sıklığı</label>
+            <select id="selectComboCadence">
+              <option value="6500">Yavaş (6.5 sn)</option>
+              <option value="4500" selected>Normal (4.5 sn)</option>
+              <option value="3200">Hızlı (3.2 sn)</option>
+              <option value="2300">Şampiyon (2.3 sn)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 2: PROGRAMS ==================== -->
+    <section id="view-programs" class="view" aria-label="Boks Programları">
+      <div class="section-intro">
+        <h2>Kademeli Eğitim Programları</h2>
+        <p>Sıfırdan başlayarak şampiyonluk temposuna kadar adım adım ilerle. Seçtiğin program zamanlayıcıya ve sesli çağırıcıya otomatik yüklenir.</p>
+      </div>
+
+      <div class="filter-bar" id="programFilterBar">
+        <button class="filter-pill active" data-level="all" type="button">Tümü</button>
+        <button class="filter-pill" data-level="1" type="button">1 · Sıfırdan</button>
+        <button class="filter-pill" data-level="2" type="button">2 · Gelişim</button>
+        <button class="filter-pill" data-level="3" type="button">3 · Orta</button>
+        <button class="filter-pill" data-level="4" type="button">4 · İleri</button>
+      </div>
+
+      <div id="programsList" class="programs-grid"></div>
+    </section>
+
+    <!-- ==================== TAB 3: TECHNIQUES ==================== -->
+    <section id="view-techniques" class="view" aria-label="Teknik Kütüphanesi">
+      <div class="section-intro">
+        <h2>Teknik Kütüphanesi</h2>
+        <p>Yumruk numaraları, savunmalar ve ayak oyunları. Üstteki gard seçimin (<strong id="techStanceNote">Ortodoks</strong>) sol/sağ el açıklamalarını otomatik uyarlar.</p>
+      </div>
+
+      <div class="punch-legend-strip" id="punchLegendStrip"></div>
+
+      <div class="filter-bar" id="techFilterBar">
+        <button class="filter-pill active" data-cat="all" type="button">Tümü</button>
+        <button class="filter-pill" data-cat="gard" type="button">Gard</button>
+        <button class="filter-pill" data-cat="yumruk" type="button">Yumruklar (1-6)</button>
+        <button class="filter-pill" data-cat="savunma" type="button">Savunma</button>
+        <button class="filter-pill" data-cat="ayak" type="button">Ayak Oyunu</button>
+      </div>
+
+      <div id="techniquesList" class="tech-grid"></div>
+    </section>
+
+    <!-- ==================== TAB 4: PROGRESS ==================== -->
+    <section id="view-progress" class="view" aria-label="İlerleme ve Kariyer">
+      <div class="rank-hero card">
+        <div class="rank-top">
+          <div>
+            <span class="badge-gold">KARİYER SEVİYESİ</span>
+            <h2 id="rankTitle">Çaylak</h2>
+            <p id="rankNextHint">Sonraki rütbeye 150 XP kaldı</p>
+          </div>
+          <div class="rank-emblem" id="rankEmblem">🥊</div>
+        </div>
+        <div class="xp-bar-wrap">
+          <div class="xp-bar-fill" id="xpBarFill" style="width: 0%"></div>
+        </div>
+        <div class="xp-meta">
+          <span id="xpCurrentLabel">0 XP</span>
+          <span id="xpNextLabel">150 XP</span>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-label">GÜNLÜK SERİ</span>
+          <strong class="stat-value gold" id="statStreak">0</strong>
+          <small>Gün</small>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">TOPLAM RAUNT</span>
+          <strong class="stat-value red" id="statRounds">0</strong>
+          <small>Tamamlanan</small>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">TOPLAM SÜRE</span>
+          <strong class="stat-value" id="statMinutes">0</strong>
+          <small>Dakika</small>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">ANTRENMAN</span>
+          <strong class="stat-value" id="statWorkouts">0</strong>
+          <small>Seans</small>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h3>Son 7 Gün Aktivitesi</h3>
+          <span class="muted-small" id="weekSummaryLabel">0 gün aktif</span>
+        </div>
+        <div class="week-strip" id="weekStrip"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h3>Kişisel Tercihler</h3>
+        </div>
+        <div class="pref-row">
+          <div>
+            <strong>Gard Duruşu</strong>
+            <p class="muted-small">Yumruk ve sesli komut yönlerini belirler</p>
+          </div>
+          <div class="segmented">
+            <button type="button" id="prefOrthodox" class="seg-btn active">Ortodoks (Sağlak)</button>
+            <button type="button" id="prefSouthpaw" class="seg-btn">Ters Gard (Solak)</button>
+          </div>
+        </div>
+        <div class="pref-row">
+          <div>
+            <strong>Sesli Komut Hızı</strong>
+            <p class="muted-small">Türkçe konuşma hızı (<span id="speechRateVal">1.05x</span>)</p>
+          </div>
+          <input type="range" id="rangeSpeechRate" min="0.8" max="1.4" step="0.05" value="1.05" />
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h3>Antrenman Geçmişi</h3>
+          <button id="btnClearHistory" class="text-link-btn danger-text" type="button">Verileri Sıfırla</button>
+        </div>
+        <div id="historyList" class="history-list"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ==================== GLOVE FOCUS MODE OVERLAY ==================== -->
+  <div id="gloveOverlay" class="glove-overlay hidden" role="dialog" aria-label="Eldiven Modu">
+    <div class="glove-top">
+      <span class="phase-pill" id="glovePhaseLabel">RAUNT</span>
+      <span class="round-counter" id="gloveRoundLabel">1 / 3</span>
+      <button id="btnExitGloveMode" class="glove-exit-btn" type="button">✕ Çık</button>
+    </div>
+
+    <button id="gloveTapZone" class="glove-tap-zone" type="button" aria-label="Başlat veya Duraklat">
+      <div class="glove-clock" id="gloveClock">03:00</div>
+      <div class="glove-combo-badges" id="gloveComboBadges"></div>
+      <div class="glove-combo-text" id="gloveComboText">Hazır</div>
+      <div class="glove-hint" id="gloveHint">DURAKLATMAK / BAŞLATMAK İÇİN EKRANA DOKUN</div>
+    </button>
+
+    <div class="glove-bottom-bar">
+      <button id="gloveSkipBtn" class="glove-action-btn" type="button">⏭ SONRAKİ</button>
+      <button id="gloveResetBtn" class="glove-action-btn danger" type="button">↺ SIFIRLA</button>
+    </div>
+  </div>
+
+  <!-- ==================== TECHNIQUE DETAIL MODAL ==================== -->
+  <div id="techModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalTechTitle">
+    <div class="modal-sheet">
+      <div class="modal-head">
+        <div>
+          <span class="badge-level" id="modalTechCategory">YUMRUK</span>
+          <h3 id="modalTechTitle">1 · Jab (Ön Direkt)</h3>
+        </div>
+        <button id="btnCloseModal" class="icon-close-btn" type="button" aria-label="Kapat">✕</button>
+      </div>
+      <div class="modal-svg-stage" id="modalTechSvg"></div>
+      <div class="modal-body">
+        <p class="modal-summary" id="modalTechSummary"></p>
+        <div class="modal-block">
+          <h4>Nasıl Yapılır?</h4>
+          <ul id="modalTechSteps"></ul>
+        </div>
+        <div class="modal-block warning">
+          <h4>Sık Yapılan Hatalar</h4>
+          <ul id="modalTechMistakes"></ul>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button id="btnSpeakTech" class="btn-ring-secondary" type="button">🎙 Sesli Dinle</button>
+        <button id="btnPracticeTech" class="btn-ring-primary compact" type="button">🥊 Ringde Çalış</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav" aria-label="Ana Menü">
+    <button class="nav-btn active" data-tab="ring" type="button">
+      <span class="nav-icon">⏱</span>
+      <span class="nav-label">Ring</span>
+    </button>
+    <button class="nav-btn" data-tab="programs" type="button">
+      <span class="nav-icon">📋</span>
+      <span class="nav-label">Programlar</span>
+    </button>
+    <button class="nav-btn" data-tab="techniques" type="button">
+      <span class="nav-icon">🥊</span>
+      <span class="nav-label">Teknikler</span>
+    </button>
+    <button class="nav-btn" data-tab="progress" type="button">
+      <span class="nav-icon">🏆</span>
+      <span class="nav-label">İlerleme</span>
+    </button>
+  </nav>
+
+  <script src="./data.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
